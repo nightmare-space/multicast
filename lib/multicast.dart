@@ -28,7 +28,7 @@ class Multicast {
   Multicast({this.port = _port});
 
   /// 停止对 udp 发送消息
-  void stopSendBoardCast() {
+  void stopSendBoardcast() {
     if (!_isStartSend) {
       return;
     }
@@ -37,7 +37,7 @@ class Multicast {
   }
 
   /// 接收udp广播消息
-  Future<void> _receiveBoardCast() async {
+  Future<void> _receiveBoardcast() async {
     RawDatagramSocket.bind(
       InternetAddress.anyIPv4,
       port,
@@ -128,7 +128,7 @@ class Multicast {
 
   void addListener(MessageCall listener) {
     if (!_isStartReceive) {
-      _receiveBoardCast();
+      _receiveBoardcast();
       _isStartReceive = true;
     }
     _callback.add(listener);

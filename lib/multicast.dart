@@ -5,7 +5,7 @@ import 'dart:io';
 
 InternetAddress _mDnsAddressIPv4 = InternetAddress('224.0.0.251');
 const int _port = 4545;
-typedef MessageCall = void Function(String data, {String? address});
+typedef MessageCall = void Function(String data, String address);
 
 bool _hasMatch(String? value, String pattern) {
   return (value == null) ? false : RegExp(pattern).hasMatch(value);
@@ -56,14 +56,14 @@ class Multicast {
           return;
         }
         String message = utf8.decode(datagram.data);
-        _notifiAll(message, address: datagram.address.address);
+        _notifiAll(message, datagram.address.address);
       });
     });
   }
 
-  void _notifiAll(String data, {String? address}) {
+  void _notifiAll(String data, String address) {
     for (MessageCall call in _callback) {
-      call(data, address: address);
+      call(data, address);
     }
   }
 

@@ -82,7 +82,6 @@ class Multicast {
       InternetAddress.anyIPv4,
       port,
       reuseAddress: true,
-      reusePort: false,
       ttl: 255,
     ).then((RawDatagramSocket socket) {
       // 接收组播消息
@@ -95,6 +94,7 @@ class Multicast {
         if (datagram == null) {
           return;
         }
+        
         String message = utf8.decode(datagram.data);
         _notifiAll(message, datagram.address.address);
       });
@@ -116,6 +116,7 @@ class Multicast {
       InternetAddress.anyIPv4,
       0,
       ttl: 255,
+      reuseAddress: true,
     );
     _socket?.broadcastEnabled = true;
     _socket?.readEventsEnabled = true;

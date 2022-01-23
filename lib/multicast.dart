@@ -3,6 +3,8 @@ library multicast;
 import 'dart:convert';
 import 'dart:io';
 
+import 'dart:isolate';
+
 InternetAddress _mDnsAddressIPv4 = InternetAddress('224.0.0.251');
 const int _port = 4545;
 typedef MessageCall = void Function(String data, String address);
@@ -94,7 +96,7 @@ class Multicast {
         if (datagram == null) {
           return;
         }
-        
+
         String message = utf8.decode(datagram.data);
         _notifiAll(message, datagram.address.address);
       });
@@ -107,26 +109,24 @@ class Multicast {
     }
   }
 
-  Future<void> startSendBoardcast(String data, {Duration? duration}) async {
+  Future<void> startSendBoardcast(
+    String data, {
+    Duration duration = const Duration(seconds: 1),
+  }) async {
     if (_isStartSend) {
       return;
     }
     _isStartSend = true;
-    _socket = await RawDatagramSocket.bind(
-      InternetAddress.anyIPv4,
-      0,
-      ttl: 255,
-      reuseAddress: true,
+    final ReceivePort receivePort = ReceivePort();
+    Isolate.spawn(
+      isolateEntryPoint,
+      _IsolateArgs(
+        receivePort.sendPort,
+        port,
+        data,
+        duration,
+      ),
     );
-    _socket?.broadcastEnabled = true;
-    _socket?.readEventsEnabled = true;
-    while (true) {
-      _socket!.boardcast(data, port);
-      if (!_isStartSend) {
-        break;
-      }
-      await Future.delayed(duration ?? const Duration(seconds: 1));
-    }
   }
 
   void addListener(MessageCall listener) {
@@ -142,4 +142,45 @@ class Multicast {
       _callback.remove(listener);
     }
   }
+}
+
+void isolateEntryPoint(_IsolateArgs args) {
+  startSendBoardcast(
+    args.mesage,
+    args.port,
+    args.duration,
+  );
+}
+
+Future<void> startSendBoardcast(
+  String data,
+  int port,
+  Duration duration,
+) async {
+  RawDatagramSocket _socket = await RawDatagramSocket.bind(
+    InternetAddress.anyIPv4,
+    0,
+    ttl: 255,
+    reuseAddress: true,
+  );
+  _socket.broadcastEnabled = true;
+  _socket.readEventsEnabled = true;
+  while (true) {
+    _socket.boardcast(data, port);
+    await Future.delayed(duration);
+  }
+}
+
+class _IsolateArgs<T> {
+  _IsolateArgs(
+    this.sendPort,
+    this.port,
+    this.mesage,
+    this.duration,
+  );
+
+  final SendPort sendPort;
+  final int port;
+  final String mesage;
+  final Duration duration;
 }

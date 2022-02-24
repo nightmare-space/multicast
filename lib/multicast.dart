@@ -72,7 +72,7 @@ class Multicast {
 
   /// 停止对 udp 发送消息
   void stopSendBoardcast() {
-    if (!_isStartSend || isolate != null) {
+    if (!_isStartSend) {
       return;
     }
     isolate?.kill();

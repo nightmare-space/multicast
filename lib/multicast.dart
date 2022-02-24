@@ -61,19 +61,21 @@ extension Boardcast on RawDatagramSocket {
 
 /// 通过组播+广播的方式，让设备能够相互在局域网被发现
 class Multicast {
+  Multicast({this.port = _port});
   final int port;
   final List<MessageCall> _callback = [];
   RawDatagramSocket? _socket;
   bool _isStartSend = false;
   bool _isStartReceive = false;
-
-  Multicast({this.port = _port});
+  final ReceivePort receivePort = ReceivePort();
+  Isolate? isolate;
 
   /// 停止对 udp 发送消息
   void stopSendBoardcast() {
-    if (!_isStartSend) {
+    if (!_isStartSend || isolate != null) {
       return;
     }
+    isolate?.kill();
     _isStartSend = false;
     _socket?.close();
   }
@@ -117,9 +119,8 @@ class Multicast {
       return;
     }
     _isStartSend = true;
-    final ReceivePort receivePort = ReceivePort();
-    Isolate.spawn(
-      isolateEntryPoint,
+    isolate = await Isolate.spawn(
+      multicastIsoate,
       _IsolateArgs(
         receivePort.sendPort,
         port,
@@ -144,11 +145,12 @@ class Multicast {
   }
 }
 
-void isolateEntryPoint(_IsolateArgs args) {
+void multicastIsoate(_IsolateArgs args) {
   startSendBoardcast(
     args.mesage,
     args.port,
     args.duration,
+    args.sendPort,
   );
 }
 
@@ -156,6 +158,7 @@ Future<void> startSendBoardcast(
   String data,
   int port,
   Duration duration,
+  SendPort sendPort,
 ) async {
   RawDatagramSocket _socket = await RawDatagramSocket.bind(
     InternetAddress.anyIPv4,

@@ -77,7 +77,6 @@ class Multicast {
     }
     isolate?.kill();
     _isStartSend = false;
-    _socket?.close();
   }
 
   /// 接收udp广播消息

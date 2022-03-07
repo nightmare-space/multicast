@@ -1,5 +1,6 @@
 library multicast;
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -167,10 +168,9 @@ Future<void> startSendBoardcast(
   );
   _socket.broadcastEnabled = true;
   _socket.readEventsEnabled = true;
-  while (true) {
+  final Timer timer = Timer.periodic(duration, (timer) async {
     _socket.boardcast(data, port);
-    await Future.delayed(duration);
-  }
+  });
 }
 
 class _IsolateArgs<T> {

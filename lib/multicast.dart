@@ -76,8 +76,8 @@ class Multicast {
     if (!_isStartSend) {
       return;
     }
-    isolate?.kill();
     _isStartSend = false;
+    isolate?.kill();
   }
 
   /// 接收udp广播消息
@@ -112,7 +112,7 @@ class Multicast {
   }
 
   Future<void> startSendBoardcast(
-    String data, {
+    List<String> messages, {
     Duration duration = const Duration(seconds: 1),
   }) async {
     if (_isStartSend) {
@@ -124,7 +124,7 @@ class Multicast {
       _IsolateArgs(
         receivePort.sendPort,
         port,
-        data,
+        messages,
         duration,
       ),
     );
@@ -147,7 +147,7 @@ class Multicast {
 
 void multicastIsoate(_IsolateArgs args) {
   startSendBoardcast(
-    args.mesage,
+    args.messages,
     args.port,
     args.duration,
     args.sendPort,
@@ -155,7 +155,7 @@ void multicastIsoate(_IsolateArgs args) {
 }
 
 Future<void> startSendBoardcast(
-  String data,
+  List<String> messages,
   int port,
   Duration duration,
   SendPort sendPort,
@@ -169,7 +169,10 @@ Future<void> startSendBoardcast(
   _socket.broadcastEnabled = true;
   _socket.readEventsEnabled = true;
   final Timer timer = Timer.periodic(duration, (timer) async {
-    _socket.boardcast(data, port);
+    for (String data in messages) {
+      _socket.boardcast(data, port);
+      await Future.delayed(Duration(milliseconds: 500));
+    }
   });
 }
 
@@ -177,12 +180,12 @@ class _IsolateArgs<T> {
   _IsolateArgs(
     this.sendPort,
     this.port,
-    this.mesage,
+    this.messages,
     this.duration,
   );
 
   final SendPort sendPort;
   final int port;
-  final String mesage;
+  final List<String> messages;
   final Duration duration;
 }

@@ -34,8 +34,7 @@ bool _hasMatch(String? value, String pattern) {
 
 /// 抄的getx
 extension IpString on String {
-  bool get isIPv4 =>
-      _hasMatch(this, r'^(?:(?:^|\.)(?:2(?:5[0-5]|[0-4]\d)|1?\d?\d)){4}$');
+  bool get isIPv4 => _hasMatch(this, r'^(?:(?:^|\.)(?:2(?:5[0-5]|[0-4]\d)|1?\d?\d)){4}$');
 }
 
 extension Boardcast on RawDatagramSocket {
@@ -86,6 +85,7 @@ class Multicast {
       InternetAddress.anyIPv4,
       port,
       reuseAddress: true,
+      // reusePort: true,
       ttl: 255,
     ).then((RawDatagramSocket socket) {
       // 接收组播消息
@@ -146,12 +146,16 @@ class Multicast {
 }
 
 void multicastIsoate(_IsolateArgs args) {
-  startSendBoardcast(
-    args.messages,
-    args.port,
-    args.duration,
-    args.sendPort,
-  );
+  runZonedGuarded(() {
+    startSendBoardcast(
+      args.messages,
+      args.port,
+      args.duration,
+      args.sendPort,
+    );
+  }, (Object error, StackTrace stackTrace) {
+    print('multicastIsoate error: $error');
+  });
 }
 
 Future<void> startSendBoardcast(
